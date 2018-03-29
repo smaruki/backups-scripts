@@ -31,7 +31,7 @@ BACKUP_PATH="/backups"
 ```
 
 <br>
-Crontab Ex:
+crontab:
 
 ```
 0 0 * * * mongodump-manager.sh mongodb-host1:27017,mongodb-host2:27017,mongodb-host3:27017 >/dev/null 2>&1
