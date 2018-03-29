@@ -41,6 +41,7 @@ mongorestore --host "mongodb-host1:27017" --gzip --archive=mongodb-host1-2018-01
 
 <br>
 Check Dumps failed of the day
+
 ```
 cat /var/log/mongodump-manager/mongodump-status.log | grep $(date +%F) | grep "FAILED"
 ```
