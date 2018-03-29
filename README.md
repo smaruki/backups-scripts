@@ -29,8 +29,10 @@ NUM_DUMPS=60
 # Set where database backups will be stored
 BACKUP_PATH="/backups"
 ```
+
 <br>
 Crontab Ex:
+
 ```
 0 0 * * * mongodump-manager.sh mongodb-host1:27017,mongodb-host2:27017,mongodb-host3:27017 >/dev/null 2>&1
 ```
