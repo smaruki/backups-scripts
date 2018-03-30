@@ -103,8 +103,6 @@ mongodump_replicaset() {
         log "MONGODUMP done dumping $DUMPFILE successfully"
     else
         log "MONGODUMP $DUMPFILE failed"
-        pidfile_remove
-        exit
     fi
 }
 
