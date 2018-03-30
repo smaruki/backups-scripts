@@ -30,12 +30,12 @@ MAX_LOG_SIZE=52428800
 ##############################################################################
 
 # Hostname or list of hosts from replicaset
-# HOSTS="127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019"
+# HOSTS="rsName/127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019"
 HOSTS=$1
 
 # First hostname from $HOSTS
-# Ex: localhost:27017 returns localhost
-HOSTNAME=$(echo $HOSTS | cut -d ':' -f 1)
+# Ex: rsName/localhost:27017 returns localhost
+HOSTNAME=$(echo $HOSTS | cut -d '/' -f 2 | cut -d ':' -f 1)
 
 MONGODUMP="$(which mongodump)"
 
@@ -93,27 +93,26 @@ pidfile_remove() {
 mongodump_replicaset() {
     log "MONGODUMP starting host $HOSTNAME to $DUMPFILE"
 
-    if [ "$USERNAME" != "" -a "$PASSWORD" != "" ]; then
-        $MONGODUMP --host=$HOSTS -u $BKP_USERNAME -p $BKP_PASSWORD --readPreference=secondaryPreferred --gzip --archive=$DUMPFILE
+    if [ "$BKP_USERNAME" != "" -a "$BKP_PASSWORD" != "" ]; then
+        $MONGODUMP --host=$HOSTS -u $BKP_USERNAME -p $BKP_PASSWORD --authenticationDatabase admin --readPreference=secondaryPreferred --gzip --archive=$DUMPFILE
     else
         $MONGODUMP --host=$HOSTS --readPreference=secondaryPreferred --gzip --archive=$DUMPFILE
     fi
 
     if [ $? -eq 0 ]; then
-        log "MONGODUMP done dumping $DUMPFILE successfully"
+        log "MONGODUMP done dumping $DUMPFILE"
     else
         log "MONGODUMP $DUMPFILE failed"
-        pidfile_remove
-        exit
     fi
 }
 
 
 dumpfile_check() {
-    if [ $(ls $DUMPFILE | wc -l) -gt 0 ]; then
-        log "DUMPFILEFILE $DUMPFILE persisted"
+    if [ -f $DUMPFILE ]; then
+        log "DUMPFILEFILE [ SUCCESS ] $DUMPFILE persisted"
         catlog_status "SUCCESS $HOSTNAME"
     else
+        log "DUMPFILEFILE [ FAILED ] $DUMPFILE not found"
         catlog_status "FAILED $HOSTNAME"
     fi
 }
@@ -134,10 +133,12 @@ dumpfile_cleanup() {
 
 
 logrotate() {
-    if [ $(wc -c < "$1") -gt $MAX_LOG_SIZE ]; then
-        NEW_FILENAME="$1.$DATE_NAME"
-        mv $1 $NEW_FILENAME
-        log "LOGFILE $NEW_FILENAME rotation"
+    if [ -f "$1" ]; then
+        if [ $(wc -c < "$1") -gt $MAX_LOG_SIZE ]; then
+            NEW_FILENAME="$1.$DATE_NAME"
+            mv $1 $NEW_FILENAME
+            log "LOGFILE $NEW_FILENAME rotation"
+        fi
     fi
 }
 
