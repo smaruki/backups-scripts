@@ -34,8 +34,8 @@ MAX_LOG_SIZE=52428800
 HOSTS=$1
 
 # First hostname from $HOSTS
-# Ex: localhost:27017 returns localhost
-HOSTNAME=$(echo $HOSTS | cut -d ':' -f 1)
+# Ex: rsName/localhost:27017 returns localhost
+HOSTNAME=$(echo $HOSTS | cut -d '/' -f 2 | cut -d ':' -f 1)
 
 MONGODUMP="$(which mongodump)"
 
@@ -94,7 +94,7 @@ mongodump_replicaset() {
     log "MONGODUMP starting host $HOSTNAME to $DUMPFILE"
 
     if [ "$USERNAME" != "" -a "$PASSWORD" != "" ]; then
-        $MONGODUMP --host=$HOSTS -u $BKP_USERNAME -p $BKP_PASSWORD --readPreference=secondaryPreferred --gzip --archive=$DUMPFILE
+        $MONGODUMP --host=$HOSTS -u $BKP_USERNAME -p $BKP_PASSWORD --authenticationDatabase "admin" --readPreference=secondaryPreferred --gzip --archive=$DUMPFILE
     else
         $MONGODUMP --host=$HOSTS --readPreference=secondaryPreferred --gzip --archive=$DUMPFILE
     fi
@@ -110,7 +110,7 @@ mongodump_replicaset() {
 
 
 dumpfile_check() {
-    if [ $(ls $DUMPFILE | wc -l) -gt 0 ]; then
+    if [ -f $DUMPFILE ]; then
         log "DUMPFILEFILE $DUMPFILE persisted"
         catlog_status "SUCCESS $HOSTNAME"
     else
@@ -134,10 +134,12 @@ dumpfile_cleanup() {
 
 
 logrotate() {
-    if [ $(wc -c < "$1") -gt $MAX_LOG_SIZE ]; then
-        NEW_FILENAME="$1.$DATE_NAME"
-        mv $1 $NEW_FILENAME
-        log "LOGFILE $NEW_FILENAME rotation"
+    if [ -f "$1" ]; then
+        if [ $(wc -c < "$1") -gt $MAX_LOG_SIZE ]; then
+            NEW_FILENAME="$1.$DATE_NAME"
+            mv $1 $NEW_FILENAME
+            log "LOGFILE $NEW_FILENAME rotation"
+        fi
     fi
 }
 
